@@ -10,13 +10,16 @@ before_install:
 install:
   - cabal-$CABALVER update
   - travis_retry sudo apt-get -q -y install hlint || cabal-$CABALVER install hlint
-  - cabal-$CABALVER install --only-dependencies --enable-tests
+  - cabal-$CABALVER install --only-dependencies --enable-tests . hpc-coveralls
+  - cabal-$CABALVER install hpc-coveralls
 
 script:
   - hlint . --ignore="Parse error"
   - cabal-$CABALVER configure --enable-tests --enable-coverage -v2
   - cabal-$CABALVER build
   - cabal-$CABALVER test --show-details=always
+  - run-cabal-test --show-details=always
+  - hpc-coveralls --exclude-dir=test test || true
 
 after_script:
   - cabal-$CABALVER install hpc-coveralls
