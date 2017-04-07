@@ -14,7 +14,7 @@ install:
   - cabal-$CABALVER install hpc-coveralls
 
 script:
-  - hlint . --ignore="Parse error"
+  - hlint . --no-exit-code --ignore="Parse error"
   - cabal-$CABALVER configure --enable-tests --enable-coverage -v2
   - cabal-$CABALVER build
   - cabal-$CABALVER test --show-details=always
