@@ -1,9 +1,19 @@
 name:              labCertifiedSoftwareDevelopment
 version:           1.0
 Build-Type:        Simple
-cabal-version:     >= 1.2
+cabal-version:     >= 1.8
 
 executable lab_certified_software_development
-  main-is:         Main.hs
+  main-is:         OurHeap.hs
   hs-source-dirs:  src
   build-depends:   base
+
+test-suite tests
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  hs-source-dirs:     tests, src
+  build-depends:      base,
+                      test-framework,
+                      test-framework-hunit,
+                      HUnit,
+                      containers == 0.5.*

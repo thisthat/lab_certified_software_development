@@ -1,9 +1,8 @@
-module Main where
+module OurHeap where
 
 import Prelude
 import Data.Maybe -- Should we use the maybe or not?
 -- we can use the Nothing to express no children/parent and the Just for the value.
-
 
 -- basic example of Haskell main
 main = do
@@ -20,7 +19,7 @@ takeN n (x:xs)   = x : take (n-1) xs
 
 
 -- Heapify Functions
-find_max :: Num a => [a] -> a
+find_max :: Num a => [a] -> Maybe a
 find_max xs = value
     where
         list = build_heap xs
@@ -51,8 +50,9 @@ build_heap xs = xs
 
 
 -- General Function
-nth :: Int -> [a] -> a
-nth 1 (x : _)  = x
+--nth :: (Num b, Eq b) => b -> [a] -> Maybe a
+nth _ [] = Nothing
+nth 1 (x : _)  = Just x
 nth n (_ : xs) = nth (n - 1) xs
 
 len [] = 0
@@ -75,24 +75,19 @@ get_children_position i = (l,r)
         l = heap_left_position i
         r = heap_right_position i
 
-
 -- Element
-heap_parent :: RealFrac a1 => a1 -> [a] -> a
+heap_parent :: RealFrac a1 => a1 -> [a] -> Maybe a
 heap_parent i list@(x:xs) = nth (heap_parent_position i) list
 
-heap_left :: Num a => Int -> [a] -> a
+heap_left :: Num a => Int -> [a] -> Maybe a
 heap_left i list@(x:xs) = nth (heap_left_position i) list
 
-heap_right :: Num a => Int -> [a] -> a
+heap_right :: Num a => Int -> [a] -> Maybe a
 heap_right i list@(x:xs) = nth (heap_right_position i) list
 
-heap_children :: Num a => Int -> [a] -> (a, a)
+heap_children :: Num a => Int -> [a] -> (Maybe a, Maybe a)
 heap_children i list@(x:xs) = (l_val, r_val)
     where
-    (l,r) = get_children_position i
-    l_val = nth l list
-    r_val = nth r list
-
--- Test Data
-example1 = [15,6,4,8,5,3,1,2,7]
-expected1 = [15,8,4,7,5,3,1,2,6]
+        (l,r) = get_children_position i
+        l_val = nth l list
+        r_val = nth r list
