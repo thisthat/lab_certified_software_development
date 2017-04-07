@@ -10,4 +10,7 @@ ghc:
   - 7.4
 
 script:
-  - cabal configure --enable-tests && cabal build && cabal test
+  - cabal configure --enable-tests --enable-coverage && cabal build && cabal test
+
+after_script:
+  - cabal install hpc-coveralls
