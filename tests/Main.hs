@@ -5,8 +5,10 @@ import Prelude
 
 
 main = do
-    print "Test 1"
-    test_2_always_ok
-    print "Test 2"
-    test_1
+    print "Test Parent Position"
+    test_parent_position
+    print "Test Left Position"
+    test_left_position
+    print "Test Right Postion"
+    test_right_position
 
