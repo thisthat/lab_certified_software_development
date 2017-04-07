@@ -3,6 +3,8 @@ language: haskell
 before_install:
   - ghc --version
   - cabal --version
+  - cabal install hpc-coveralls
+  - cabal install --only-dependencies --enable-tests
 
 ghc:
   - 7.8
@@ -10,7 +12,10 @@ ghc:
   - 7.4
 
 script:
-  - cabal configure --enable-tests --enable-coverage && cabal build && cabal test
+  - cabal configure --enable-tests --enable-library-coverage
+  - cabal build
+  - cabal test --show-details=always
 
 after_script:
   - cabal install hpc-coveralls
+  - hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=tests tests
