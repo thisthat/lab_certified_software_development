@@ -11,4 +11,6 @@ main = do
     test_left_position
     print "Test Right Postion"
     test_right_position
+    print "Test build heap"
+    test_heap
 

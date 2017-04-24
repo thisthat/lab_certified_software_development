@@ -38,12 +38,10 @@ height xs = floor $ logBase 2 l
 
 build_heap :: (Num a, Ord a) => [a] -> [a]
 build_heap [] = []
--- build_heap xs = bh (length xs) xs
 build_heap xs = bh (floor((fromIntegral( length xs )) / 2)) xs
---build_heap xs = bh floor( (length xs) / 2 ) xs -- this won't work ... how do i cast to Int???
     where        
         bh i xs
-            | i == 0    = heapify 0 xs
+            | i == 1    = heapify 1 xs
             | otherwise = bh (i - 1) (heapify i xs)
 
 -- Build Heap will scan from floor(n/2) to 1 (r2l) and heapify it.
@@ -63,38 +61,35 @@ heapify i xs
     | otherwise     = heapify m (swap i m xs)   -- swap root with max element and check for swapped index
     where
         m = indexOfMax i xs
-        s = length xs
 
 indexOfMax :: (Num a, Ord a) => Int -> [a] -> Int
-indexOfMax i xs 
-    | (s-1) < (i*2+1)   = i
-    | (s-1) == (i*2+1)  = 
-        if (xs !! i) >= (xs !! l) then i else l
-    | otherwise             = 
-        if (xs !! i) >= (xs !! l) && (xs !! i) >= (xs !! r)  
-            then i 
-        else if (xs !! l) >= (xs !! r) 
-            then l 
-            else r
-    where 
-        l = 2*i+1
-        r = 2*i+2
-        s = length xs
+indexOfMax i xs =  max
+    where
+        (l,r) = heap_children i xs
+        root = nth i xs
+        max = if root >= l && root >= r 
+                then i
+              else if l >= r
+                  then heap_left_position i
+             else heap_right_position i
 
 -- swap two elements of a list
 -- returns an error if parameters are out of bounds. should we handle this???
 swap :: Int -> Int -> [a] -> [a]
 swap i j []             = []
 swap i j xs 
-    | i == j    = xs
-    | j < i     = swap j i xs
-    | otherwise = start ++ [aj] ++ middle ++ [ai] ++ end
+    | i == j                            = xs
+    | j < i                             = swap j i xs
+    | isNothing(mai) || isNothing(maj)  = error("wrong indices")
+    | otherwise                         = start ++ [aj] ++ middle ++ [ai] ++ end
     where 
-        ai      = xs !! i                       -- element at i
-        aj      = xs !! j                       -- element at j
-        start   = take i xs                     -- elements before i
-        middle  = take (j-i-1) (drop (i+1) xs)  -- elements between i and j
-        end     = drop (j+1) xs                 -- elements after j
+        mai     = nth i xs                       -- maybe element at i
+        maj     = nth j xs                      -- maybe element at j
+        start   = take (i-1) xs                     -- elements before i
+        middle  = take (j-i-1) $ drop i xs  -- elements between i and j
+        end     = drop j xs                 -- elements after j
+        ai      = fromJust mai
+        aj      = fromJust maj
 
 -- General Function
 nth :: Int -> [a] -> Maybe a
@@ -125,16 +120,16 @@ get_children_position i = (l,r)
 
 -- Element
 heap_parent :: RealFrac a1 => a1 -> [a] -> Maybe a
-heap_parent i list@(x:xs) = nth (heap_parent_position i) list
+heap_parent i list@(_:_) = nth (heap_parent_position i) list
 
-heap_left :: Num a => Int -> [a] -> Maybe a
-heap_left i list@(x:xs) = nth (heap_left_position i) list
+heap_left :: (Num a, Ord a) => Int -> [a] -> Maybe a
+heap_left i list@(_:_) = nth (heap_left_position i) list
 
-heap_right :: Num a => Int -> [a] -> Maybe a
-heap_right i list@(x:xs) = nth (heap_right_position i) list
+heap_right :: (Num a, Ord a) => Int -> [a] -> Maybe a
+heap_right i list@(_:_) = nth (heap_right_position i) list
 
-heap_children :: Num a => Int -> [a] -> (Maybe a, Maybe a)
-heap_children i list@(x:xs) = (l_val, r_val)
+heap_children :: (Num a, Ord a) => Int -> [a] -> (Maybe a, Maybe a)
+heap_children i list@(_:_) = (l_val, r_val)
     where
         (l,r) = get_children_position i
         l_val = nth l list

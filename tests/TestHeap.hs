@@ -21,7 +21,7 @@ test_sum_position = foldr (++) [] children @?= [2..21]
 
 
 -- help functions
-
+--test_heap = build_heap example1 @?= expected1
 
 -- Test Data
 example1 = [   15,
