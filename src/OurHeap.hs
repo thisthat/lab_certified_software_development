@@ -73,13 +73,18 @@ indexOfMax i xs =  max
                   then heap_left_position i
              else heap_right_position i
 
+
+swap :: Int -> Int -> [a] -> [a]
+swap i j xs
+    | j < i  = swap_helper j i xs
+    | otherwise = swap_helper i j xs
+
 -- swap two elements of a list
 -- returns an error if parameters are out of bounds. should we handle this???
-swap :: Int -> Int -> [a] -> [a]
-swap i j []             = []
-swap i j xs 
+swap_helper :: Int -> Int -> [a] -> [a]
+swap_helper i j []             = []
+swap_helper i j xs
     | i == j                            = xs
-    | j < i                             = swap j i xs
     | isNothing(mai) || isNothing(maj)  = error("wrong indices")
     | otherwise                         = start ++ [aj] ++ middle ++ [ai] ++ end
     where 
@@ -90,6 +95,7 @@ swap i j xs
         end     = drop j xs                 -- elements after j
         ai      = fromJust mai
         aj      = fromJust maj
+
 
 -- General Function
 nth :: Int -> [a] -> Maybe a
