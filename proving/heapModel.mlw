@@ -14,6 +14,7 @@ module HeapModule
   use import int.Int
   use import list.List
   use import list.Length
+  use import list.HdTlNoOpt
   use import list.Permut
   use import list.Append
   use import ref.Ref
@@ -22,7 +23,15 @@ module HeapModule
   use import Nth
   use import int.ComputerDivision
 
-  type heap_rep = { data : list int }
+  type heap_rep = { mutable size :int; data : list int }
+
+  function to_abstract_heap(h: heap_rep) : list int
+  axiom to_abastract_heap0: forall h : heap_rep . h.size = 0 ->  to_abstract_heap(h) = Nil
+  axiom to_abastract_heap1:
+    forall h : heap_rep .
+      let h1 = {size= h.size-1; data=h.data} in
+        h.size > 0 -> to_abstract_heap(h) = Cons (hd h1.data) (tl h1.data)
+
 
   exception Wrong_index
 
@@ -69,7 +78,30 @@ module HeapModule
     | Some e -> e
     end
 
-  let swap_helper(i:int)(j:int)(h:heap_rep):heap_rep
+
+  axiom tail_size: forall l:list int . length (tl l) = (length l) - 1
+
+  let rec take(l : list int)(i :int) : list int
+  requires { 0 <= i <= length l } (** ensure i < length i **)
+  variant { i }
+  ensures { i = 0 -> Nil = result /\ i > 0 -> length result = i }
+  = if i = 0 then begin
+      Nil
+    end else begin
+      Cons (hd l) (take (tl l) (i-1))
+    end
+
+  let rec drop(l : list int)(i :int) : list int
+  requires { i < length l /\ i >= 0}
+  variant { i }
+  ensures { i = 0 -> result = l /\ i > 0 -> (length l) - i = length result }
+  = if i = 0 then begin
+      l
+    end else begin
+      (take (tl l) (i-1))
+    end
+
+  let swap_helper(i:int)(j:int)(h:heap_rep): list int
     requires { i <= j }
     requires { i <= length h.data /\ j <= length h.data}
     ensures { same_object (old h) h }
@@ -77,19 +109,26 @@ module HeapModule
     (** then we have to say that each element will be equal except the one in i and j *)
     = if (isNothing (nth i h.data))  then raise Wrong_index
       else if (isNothing (nth j h.data))  then raise Wrong_index
-      else h
-
-  val x: ref int
-  val y: ref int
+      else begin
+        let start = (take h.data (i-1)) in
+        let middle = (take (drop h.data i) (j-i-1)) in
+        let _end = (drop h.data j) in
+        let aj = (get (nth j h.data)) in
+        let ai = (get (nth i h.data)) in
+          (start ++ (Cons aj Nil) ++ middle ++ (Cons ai Nil) ++ _end)
+      end
 
   let swap(i:int)(j:int)(h:heap_rep):heap_rep
-    = try
+    = let x = ref 0 in
+      let y = ref 0 in
+      try
         if i <= j then begin
           x := i; y := j
         end else begin
           x := j; y := i
         end;
-        (swap_helper !x !y h)
-      with Wrong_index -> h
+        let l = (swap_helper !x !y h) in
+          {size = length l; data = l}
+      with Wrong_index -> { size = h.size; data = h.data}
       end
 end
