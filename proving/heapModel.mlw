@@ -22,43 +22,45 @@ theory NthNoOpt
 
 end
 
+theory HdTlNoOpt
+  use export list.List
+  use import list.Length
+  use import int.Int
+
+  function hd (l: list 'a) : 'a
+  function tl (l: list 'a) : list 'a
+
+  axiom hd_cons: forall x:'a, r:list 'a. hd (Cons x r) = x
+
+  axiom tl_cons: forall x:'a, r:list 'a. tl (Cons x r) = r
+
+  (** We need this axiom to ensure the length decreases with the call of tail **)
+  axiom tail_size: forall l:list int . length (tl l) = (length l) - 1
+
+end
+
+
+
 module HeapModule
+(** Standard modules **)
   use import int.Int
   use import list.List
   use import list.Length
-  use import list.HdTlNoOpt
   use import list.Permut
   use import list.Append
   use import ref.Ref
   use import bool.Bool
   use import option.Option
+  use import int.ComputerDivision
+(** Our revision of original modules **)
   use import Nth
   use import NthNoOpt
-  use import int.ComputerDivision
-
-  type heap_rep = { mutable size :int; data : list int }
-
-  function to_abstract_heap(h: heap_rep) : list int
-  axiom to_abastract_heap0: forall h : heap_rep . h.size = 0 ->  to_abstract_heap(h) = Nil
-  axiom to_abastract_heap1:
-    forall h : heap_rep .
-      let h1 = {size= h.size-1; data=h.data} in
-        h.size > 0 -> to_abstract_heap(h) = Cons (hd h1.data) (tl h1.data)
-
-  predicate invariant_size_heap (h: heap_rep)=
-    0 <= h.size <= length(h.data)
+  use import HdTlNoOpt
 
   exception Wrong_index
 
-  predicate inv(h : heap_rep) =
-    forall i : int . 0 <= i < length h.data
-
-
-    function left(i : int) : int = i*2
-    function right(i : int) : int = i*2+1
-
-    axiom increase_left: forall i :int . i < left i
-    axiom increase_right: forall i :int . i < right i
+  function left(i : int) : int = i*2
+  function right(i : int) : int = i*2+1
 
   let heap_left_position(i: int) : int
     requires { i > 0}
@@ -74,19 +76,19 @@ module HeapModule
     ensures { result = (left i, right i)}
     =(heap_left_position(i), heap_right_position(i))
 
-  let heap_left(i :int)(h: heap_rep): option int
+  let heap_left(i :int)(h: list int): option int
     requires{i > 0}
-    ensures { result = nth (left i) h.data}
-    = nth (heap_left_position i) h.data
+    ensures { result = nth (left i) h}
+    = nth (heap_left_position i) h
 
-  let heap_right(i :int)(h: heap_rep): option int
+  let heap_right(i :int)(h: list int): option int
     requires{i > 0}
-    ensures { result = nth ( right i) h.data}
-    = nth (heap_right_position i) h.data
+    ensures { result = nth ( right i) h}
+    = nth (heap_right_position i) h
 
-  let heap_children(i:int)(h: heap_rep) : (option int, option int)
+  let heap_children(i:int)(h: list int) : (option int, option int)
     requires{i > 0}
-    ensures{ result = (nth (left i) h.data, nth (right i) h.data)}
+    ensures{ result = (nth (left i) h, nth (right i) h)}
     = (heap_left i h, heap_right i h)
 
 
@@ -102,9 +104,6 @@ module HeapModule
     | None -> 0
     | Some e -> e
     end
-
-  (** We need this axiom to ensure the length decreases with the call of tail **)
-  axiom tail_size: forall l:list int . length (tl l) = (length l) - 1
 
   let rec take(l : list int)(i :int) : list int
   requires { 0 <= i <= length l } (** ensure i < length i **)
@@ -126,33 +125,29 @@ module HeapModule
       (take (tl l) (i-1))
     end
 
-
-    predicate same_object (l1 : heap_rep) (l2:heap_rep) =
-      permut l1.data l2.data
-
-  let swap_helper(i:int)(j:int)(h:heap_rep): list int
+  let swap_helper(i:int)(j:int)(h:list int): list int
     requires { i <= j }
-    requires { i <= length h.data /\ j <= length h.data}
-    ensures { same_object (old h) h }
-    ensures { nth i (old h.data) = nth j h.data /\ nth j (old h.data) = nth i h.data }
-    ensures { forall k : int . ( 0 <= k <= length(h.data) /\ not (k = i \/ k = j) ) -> nth k (old h.data) = nth k h.data }
-    raises { Wrong_index -> forall i: int. i >= (div (length h.data) 2) }
+    requires { i <= length h /\ j <= length h}
+    ensures { permut (old h) h }
+    ensures { nth i (old h) = nth j h /\ nth j (old h) = nth i h }
+    ensures { forall k : int . ( 0 <= k <= (length h) /\ not (k = i \/ k = j) ) -> nth k (old h) = nth k h }
+    raises { Wrong_index -> forall i: int. i >= (div (length h) 2) }
     (** then we have to say that each element will be equal except the one in i and j *)
-    = if (isNothing (nth i h.data))  then raise Wrong_index
-      else if (isNothing (nth j h.data))  then raise Wrong_index
+    = if (isNothing (nth i h))  then raise Wrong_index
+      else if (isNothing (nth j h))  then raise Wrong_index
       else begin
-        let start = (take h.data (i-1)) in
-        let middle = (take (drop h.data i) (j-i-1)) in
-        let _end = (drop h.data j) in
-        let aj = (get (nth j h.data)) in
-        let ai = (get (nth i h.data)) in
+        let start = (take h (i-1)) in
+        let middle = (take (drop h i) (j-i-1)) in
+        let _end = (drop h j) in
+        let aj = (get (nth j h)) in
+        let ai = (get (nth i h)) in
           (start ++ (Cons aj Nil) ++ middle ++ (Cons ai Nil) ++ _end)
       end
 
-  let swap(i:int)(j:int)(h:heap_rep):heap_rep
-    ensures { same_object (old h) h }
-    ensures { nth i (old h.data) = nth j h.data /\ nth j (old h.data) = nth i h.data }
-    ensures { forall k : int . ( 0 <= k <= length(h.data) /\ not (k = i \/ k = j) ) -> nth k (old h.data) = nth k h.data }
+  let swap(i:int)(j:int)(h:list int):list int
+    ensures { permut (old h) h }
+    ensures { nth i (old h) = nth j h /\ nth j (old h) = nth i h }
+    ensures { forall k : int . ( 0 <= k <= length(h) /\ not (k = i \/ k = j) ) -> nth k (old h) = nth k h }
     = let x = ref 0 in
       let y = ref 0 in
       try
@@ -162,19 +157,18 @@ module HeapModule
           x := j; y := i
         end;
         assert{ !x <= !y };
-        let l = (swap_helper !x !y h) in
-          {size = length l; data = l}
-      with Wrong_index -> { size = h.size; data = h.data}
+        (swap_helper !x !y h)
+      with Wrong_index -> h
       end
 
-    let indexOfMax(i : int)(h:heap_rep): int
-    requires { 0 <= i <= length h.data }
-    ensures { 0 <= result <= length h.data }
-    ensures { (nthNoOpt result h.data >= nthNoOpt i h.data)
-      /\ (nthNoOpt result h.data >= nthNoOpt (i*2) h.data)
-      /\ (nthNoOpt result h.data >= nthNoOpt (i*2+1) h.data) }
+    let indexOfMax(i : int)(h:list int): int
+    requires { 0 <= i <= length h }
+    ensures { 0 <= result <= length h }
+    ensures { (nthNoOpt result h >= nthNoOpt i h)
+      /\ (nthNoOpt result h >= nthNoOpt (left i) h)
+      /\ (nthNoOpt result h >= nthNoOpt (right i) h) }
     = let (l,r) =  heap_children i h    in
-      let root = get (nth i h.data)     in
+      let root = get (nth i h)     in
       if root >= get l && root >= get r then
         i
       else if get l >= get r then
@@ -182,38 +176,38 @@ module HeapModule
       else
         heap_right_position i
 
-    function isHeap(i : int)(h :heap_rep): bool
-    = forall i : int . (0 <= i <= length h.data) /\ (
-      i > (div (length h.data) 2) -> True
+    function isHeap(i : int)(h :list int): bool
+    = forall i : int . (0 <= i <= length h) /\ (
+      i > (div (length h) 2) -> True
       /\
-      i <= (div (length h.data) 2) ->
-        (nthNoOpt i h.data) >= (nthNoOpt (left i) h.data) /\ (nthNoOpt i h.data) >= (nthNoOpt (right i) h.data)
+      i <= (div (length h) 2) ->
+        (nthNoOpt i h) >= (nthNoOpt (left i) h) /\ (nthNoOpt i h) >= (nthNoOpt (right i) h)
     )
 
-    let rec heapify (i : int)(h: heap_rep): heap_rep
-    requires { i <= length h.data}
-    variant { (length h.data)-i }
+    let rec heapify (i : int)(h: list int): list int
+    requires { i <= length h}
+    variant { (length h)-i }
     ensures { isHeap i h }
-    = if length h.data = 0 then
-        { size = 0; data = Nil }
+    = if length h = 0 then
+        Nil
       else let m = (indexOfMax i h) in
         if m = i then
-          { size = h.size; data = h.data }
+          h
         else
           heapify m (swap i m h)
 
-    let rec bh (i : int)(h : heap_rep) : heap_rep
+    let rec bh (i : int)(h : list int) : list int
     requires { i > 0 }
     variant { i }
-    ensures { forall k : int . i <= k <= (div (length h.data) 2) -> isHeap k h }
+    ensures { forall k : int . i <= k <= (div (length h) 2) -> isHeap k h }
     = if i = 1 then
         heapify 1 h
       else
         bh (i -1) (heapify i h)
 
-    let build_heap (h: heap_rep) : heap_rep
-    ensures { forall i : int . 0 <= i <= (div (length h.data) 2) -> isHeap i h }
-    = bh (div (length h.data) 2) h
+    let build_heap (h: list int) : list int
+    ensures { forall i : int . 0 <= i <= (div (length h) 2) -> isHeap i h }
+    = bh (div (length h) 2) h
 
 
 
