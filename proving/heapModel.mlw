@@ -191,6 +191,7 @@ module HeapModule
     )
 
     let rec heapify (i : int)(h: heap_rep): heap_rep
+    requires { i <= length h.data}
     variant { (length h.data)-i }
     ensures { isHeap i h }
     = if length h.data = 0 then
@@ -200,6 +201,20 @@ module HeapModule
           { size = h.size; data = h.data }
         else
           heapify m (swap i m h)
+
+    let rec bh (i : int)(h : heap_rep) : heap_rep
+    requires { i > 0 }
+    variant { i }
+    ensures { forall k : int . i <= k <= (div (length h.data) 2) -> isHeap k h }
+    = if i = 1 then
+        heapify 1 h
+      else
+        bh (i -1) (heapify i h)
+
+    let build_heap (h: heap_rep) : heap_rep
+    ensures { forall i : int . 0 <= i <= (div (length h.data) 2) -> isHeap i h }
+    = bh (div (length h.data) 2) h
+
 
 
 end
