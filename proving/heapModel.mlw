@@ -79,11 +79,17 @@ module HeapModule
       else if (isNothing (nth j h.data))  then raise Wrong_index
       else h
 
+  val x: ref int
+  val y: ref int
 
   let swap(i:int)(j:int)(h:heap_rep):heap_rep
     = try
-        if i <= j  then (swap_helper i j h)
-        else (swap_helper j i h)
+        if i <= j then begin
+          x := i; y := j
+        end else begin
+          x := j; y := i
+        end;
+        (swap_helper !x !y h)
       with Wrong_index -> h
       end
 end
