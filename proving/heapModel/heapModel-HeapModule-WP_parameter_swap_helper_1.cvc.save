@@ -1,0 +1,627 @@
+t%%% this is a prelude for CVC3 
+%%% this is a prelude for CVC3 integer arithmetic
+uni : TYPE;
+
+ty : TYPE;
+
+sort: (ty, uni) -> BOOLEAN;
+
+witness: (ty) -> uni;
+
+% witness_sort
+  ASSERT (FORALL (a : ty): (sort(a, witness(a))));
+
+int: ty;
+
+real: ty;
+
+bool: ty;
+
+match_bool: (ty, BITVECTOR(1), uni, uni) -> uni;
+
+% match_bool_sort
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : BITVECTOR(1), x1 : uni, x2 : uni): (sort(a, match_bool(a, x,
+  x1, x2)))));
+
+% match_bool_True
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (z : uni, z1 : uni):
+  ((sort(a, z)) => (match_bool(a, 0bin1, z, z1) = z))));
+
+% match_bool_False
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (z : uni, z1 : uni):
+  ((sort(a, z1)) => (match_bool(a, 0bin0, z, z1) = z1))));
+
+index_bool: (BITVECTOR(1)) -> INT;
+
+% index_bool_True
+  ASSERT (index_bool(0bin1) = 0);
+
+% index_bool_False
+  ASSERT (index_bool(0bin0) = 1);
+
+% bool_inversion
+  ASSERT (FORALL (u : BITVECTOR(1)): ((u = 0bin1) OR (u = 0bin0)));
+
+tuple0 : TYPE;
+
+tuple01: ty;
+
+Tuple0: tuple0;
+
+% tuple0_inversion
+  ASSERT (FORALL (u : tuple0): (u = Tuple0));
+
+% CompatOrderMult
+  ASSERT
+  (FORALL (x : INT, y : INT, z : INT):
+  ((x <= y) => ((0 <= z) => ((x * z) <= (y * z)))));
+
+list6: (ty) -> ty;
+
+Nil6: (ty) -> uni;
+
+% Nil_sort
+  ASSERT (FORALL (a : ty): (sort(list6(a), Nil6(a))));
+
+Cons6: (ty, uni, uni) -> uni;
+
+% Cons_sort
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, x1 : uni): (sort(list6(a), Cons6(a, x, x1)))));
+
+match_list6: (ty, ty, uni, uni, uni) -> uni;
+
+% match_list_sort
+  ASSERT
+  (FORALL (a : ty, a1 : ty):
+  (FORALL (x : uni, x1 : uni, x2 : uni): (sort(a1, match_list6(a1, a, x, x1,
+  x2)))));
+
+% match_list_Nil
+  ASSERT
+  (FORALL (a : ty, a1 : ty):
+  (FORALL (z : uni, z1 : uni):
+  ((sort(a1, z)) => (match_list6(a1, a, Nil6(a), z, z1) = z))));
+
+% match_list_Cons
+  ASSERT
+  (FORALL (a : ty, a1 : ty):
+  (FORALL (z : uni, z1 : uni, u : uni, u1 : uni):
+  ((sort(a1, z1)) => (match_list6(a1, a, Cons6(a, u, u1), z, z1) = z1))));
+
+index_list6: (ty, uni) -> INT;
+
+% index_list_Nil
+  ASSERT (FORALL (a : ty): (index_list6(a, Nil6(a)) = 0));
+
+% index_list_Cons
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni, u1 : uni):PATTERN (Cons6(a, u, u1)):  (index_list6(a, 
+  Cons6(a, u, u1)) = 1)));
+
+Cons_proj_16: (ty, uni) -> uni;
+
+% Cons_proj_1_sort
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni): (sort(a, Cons_proj_16(a, x)))));
+
+% Cons_proj_1_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni, u1 : uni):
+  ((sort(a, u)) => (Cons_proj_16(a, Cons6(a, u, u1)) = u))));
+
+Cons_proj_26: (ty, uni) -> uni;
+
+% Cons_proj_2_sort
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni): (sort(list6(a), Cons_proj_26(a, x)))));
+
+% Cons_proj_2_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni, u1 : uni): (Cons_proj_26(a, Cons6(a, u, u1)) = u1)));
+
+% list_inversion
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni):
+  ((u = Nil6(a)) OR (u = Cons6(a, Cons_proj_16(a, u), Cons_proj_26(a, u))))));
+
+length6: (ty, uni) -> INT;
+
+list3_int: TYPE;
+
+length7: (list3_int) -> INT;
+
+t2tb7: (list3_int) -> uni;
+
+% t2tb_sort
+  ASSERT (FORALL (x : list3_int): (sort(list6(int), t2tb7(x))));
+
+tb2t7: (uni) -> list3_int;
+
+% BridgeL
+  ASSERT (FORALL (i : list3_int):PATTERN (t2tb7(i)):  (tb2t7(t2tb7(i)) = i));
+
+% BridgeR
+  ASSERT
+  (FORALL (j : uni):PATTERN (t2tb7(tb2t7(j))):  (t2tb7(tb2t7(j)) = j));
+
+t2tb1: (INT) -> uni;
+
+% t2tb_sort
+  ASSERT (FORALL (x : INT): (sort(int, t2tb1(x))));
+
+tb2t1: (uni) -> INT;
+
+% BridgeL
+  ASSERT (FORALL (i : INT):PATTERN (t2tb1(i)):  (tb2t1(t2tb1(i)) = i));
+
+% BridgeR
+  ASSERT
+  (FORALL (j : uni):PATTERN (t2tb1(tb2t1(j))):  (t2tb1(tb2t1(j)) = j));
+
+% length_def
+  ASSERT
+  ((length7(tb2t7(Nil6(int))) = 0)
+  AND (FORALL (x : INT, x1 : list3_int): (length7(tb2t7(Cons6(int, t2tb1(x), 
+      t2tb7(x1)))) = (1 + length7(x1)))));
+
+% length_def
+  ASSERT
+  (FORALL (a : ty):
+  ((length6(a, Nil6(a)) = 0)
+  AND (FORALL (x : uni, x1 : uni): (length6(a, Cons6(a, x, x1)) = (1 + 
+      length6(a, x1))))));
+
+% Length_nonnegative
+  ASSERT (FORALL (l : list3_int): (0 <= length7(l)));
+
+% Length_nonnegative
+  ASSERT (FORALL (a : ty): (FORALL (l : uni): (0 <= length6(a, l))));
+
+% Length_nil
+  ASSERT
+  (FORALL (l : list3_int): ((length7(l) = 0) <=> (l = tb2t7(Nil6(int)))));
+
+% Length_nil
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l : uni): ((length6(a, l) = 0) <=> (l = Nil6(a)))));
+
+option4: (ty) -> ty;
+
+None4: (ty) -> uni;
+
+% None_sort
+  ASSERT (FORALL (a : ty): (sort(option4(a), None4(a))));
+
+option1_int: TYPE;
+
+None5: option1_int;
+
+Some4: (ty, uni) -> uni;
+
+% Some_sort
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni): (sort(option4(a), Some4(a, x)))));
+
+match_option4: (ty, ty, uni, uni, uni) -> uni;
+
+% match_option_sort
+  ASSERT
+  (FORALL (a : ty, a1 : ty):
+  (FORALL (x : uni, x1 : uni, x2 : uni): (sort(a1, match_option4(a1, a, x,
+  x1, x2)))));
+
+t2tb8: (option1_int) -> uni;
+
+% t2tb_sort
+  ASSERT (FORALL (x : option1_int): (sort(option4(int), t2tb8(x))));
+
+tb2t8: (uni) -> option1_int;
+
+% BridgeL
+  ASSERT
+  (FORALL (i : option1_int):PATTERN (t2tb8(i)):  (tb2t8(t2tb8(i)) = i));
+
+% BridgeR
+  ASSERT
+  (FORALL (j : uni):PATTERN (t2tb8(tb2t8(j))):  (t2tb8(tb2t8(j)) = j));
+
+% match_option_None
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (z : uni, z1 : uni):
+  ((sort(a, z)) => (match_option4(a, int, t2tb8(None5), z, z1) = z))));
+
+% match_option_None
+  ASSERT
+  (FORALL (a : ty, a1 : ty):
+  (FORALL (z : uni, z1 : uni):
+  ((sort(a1, z)) => (match_option4(a1, a, None4(a), z, z1) = z))));
+
+% match_option_Some
+  ASSERT
+  (FORALL (a : ty, a1 : ty):
+  (FORALL (z : uni, z1 : uni, u : uni):
+  ((sort(a1, z1)) => (match_option4(a1, a, Some4(a, u), z, z1) = z1))));
+
+index_option4: (ty, uni) -> INT;
+
+% index_option_None
+  ASSERT (index_option4(int, t2tb8(None5)) = 0);
+
+% index_option_None
+  ASSERT (FORALL (a : ty): (index_option4(a, None4(a)) = 0));
+
+% index_option_Some
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni):PATTERN (Some4(a, u)):  (index_option4(a, Some4(a,
+  u)) = 1)));
+
+Some_proj_14: (ty, uni) -> uni;
+
+% Some_proj_1_sort
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni): (sort(a, Some_proj_14(a, x)))));
+
+% Some_proj_1_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni): ((sort(a, u)) => (Some_proj_14(a, Some4(a, u)) = u))));
+
+% option_inversion
+  ASSERT
+  (FORALL (u : option1_int):
+  ((u = None5) OR (u = tb2t8(Some4(int, Some_proj_14(int, t2tb8(u)))))));
+
+% option_inversion
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni):
+  ((sort(option4(a), u))
+  => ((u = None4(a)) OR (u = Some4(a, Some_proj_14(a, u)))))));
+
+nth4: (ty, INT, uni) -> uni;
+
+% nth_sort
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : INT, x1 : uni): (sort(option4(a), nth4(a, x, x1)))));
+
+nth5: (INT, list3_int) -> option1_int;
+
+% nth_def
+  ASSERT
+  (FORALL (n : INT):
+  ((nth5(n, tb2t7(Nil6(int))) = None5)
+  AND (FORALL (x : INT, r : list3_int):
+      (LET l = tb2t7(Cons6(int, t2tb1(x), t2tb7(r))) IN
+      (IF (n = 0) THEN (nth5(n, l) = tb2t8(Some4(int, t2tb1(x)))) ELSE (
+      nth5(n, l) = nth5((n - 1), r)) ENDIF)))));
+
+% nth_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (n : INT):
+  ((nth4(a, n, Nil6(a)) = None4(a))
+  AND (FORALL (x : uni, r : uni):
+      (LET l = Cons6(a, x, r) IN
+      (IF (n = 0) THEN (nth4(a, n, l) = Some4(a, x)) ELSE (nth4(a, n, l) = 
+      nth4(a, (n - 1), r)) ENDIF))))));
+
+num_occ: (ty, uni, uni) -> INT;
+
+% num_occ_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni):
+  ((sort(a, x))
+  => ((num_occ(a, x, Nil6(a)) = 0)
+     AND (FORALL (y : uni, r : uni):
+         ((sort(a, y)) => (num_occ(a, x, Cons6(a, y,
+         r)) = ((IF (x = y) THEN 1 ELSE 0 ENDIF) + num_occ(a, x, r)))))))));
+
+% Num_Occ_NonNeg
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni, l : uni): (0 <= num_occ(a, x, l))));
+
+mem: (ty, uni, uni) -> BOOLEAN;
+
+% mem_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni):
+  ((sort(a, x))
+  => ((NOT (mem(a, x, Nil6(a))))
+     AND (FORALL (y : uni, r : uni):
+         ((sort(a, y))
+         => ((mem(a, x, Cons6(a, y, r))) <=> ((x = y) OR (mem(a, x, r))))))))));
+
+% Mem_Num_Occ
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l : uni): ((mem(a, x, l)) <=> (0 < num_occ(a, x, l)))));
+
+infix_plpl: (ty, uni, uni) -> uni;
+
+% infix ++_sort
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, x1 : uni): (sort(list6(a), infix_plpl(a, x, x1)))));
+
+% infix ++_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l2 : uni):
+  ((infix_plpl(a, Nil6(a), l2) = l2)
+  AND (FORALL (x1 : uni, r1 : uni): (infix_plpl(a, Cons6(a, x1, r1), l2) = 
+      Cons6(a, x1, infix_plpl(a, r1, l2)))))));
+
+% Append_assoc
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni, l3 : uni): (infix_plpl(a, l1, infix_plpl(a,
+  l2, l3)) = infix_plpl(a, infix_plpl(a, l1, l2), l3))));
+
+% Append_l_nil
+  ASSERT
+  (FORALL (a : ty): (FORALL (l : uni): (infix_plpl(a, l, Nil6(a)) = l)));
+
+% Append_length
+  ASSERT
+  (FORALL (l1 : list3_int, l2 : list3_int): (length7(tb2t7(infix_plpl(int, 
+  t2tb7(l1), t2tb7(l2)))) = (length7(l1) + length7(l2))));
+
+% Append_length
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni): (length6(a, infix_plpl(a, l1, l2)) = (
+  length6(a, l1) + length6(a, l2)))));
+
+% mem_append
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l1 : uni, l2 : uni):
+  ((mem(a, x, infix_plpl(a, l1, l2)))
+  <=> ((mem(a, x, l1)) OR (mem(a, x, l2))))));
+
+% mem_decomp
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l : uni):
+  ((mem(a, x, l))
+  => (EXISTS (l1 : uni, l2 : uni):
+     ((sort(list6(a), l1))
+     AND ((sort(list6(a), l2)) AND (l = infix_plpl(a, l1, Cons6(a, x, l2)))))))));
+
+% Append_Num_Occ
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l1 : uni, l2 : uni): (num_occ(a, x, infix_plpl(a, l1,
+  l2)) = (num_occ(a, x, l1) + num_occ(a, x, l2)))));
+
+reverse: (ty, uni) -> uni;
+
+% reverse_sort
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni): (sort(list6(a), reverse(a, x)))));
+
+% reverse_def
+  ASSERT
+  (FORALL (a : ty):
+  ((reverse(a, Nil6(a)) = Nil6(a))
+  AND (FORALL (x : uni, r : uni): (reverse(a, Cons6(a, x, r)) = infix_plpl(a, 
+      reverse(a, r), Cons6(a, x, Nil6(a)))))));
+
+% reverse_append
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni, x : uni): (infix_plpl(a, reverse(a, Cons6(a,
+  x, l1)), l2) = infix_plpl(a, reverse(a, l1), Cons6(a, x, l2)))));
+
+% reverse_cons
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l : uni, x : uni): (reverse(a, Cons6(a, x, l)) = infix_plpl(a, 
+  reverse(a, l), Cons6(a, x, Nil6(a))))));
+
+% cons_reverse
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l : uni, x : uni): (Cons6(a, x, reverse(a, l)) = reverse(a, 
+  infix_plpl(a, l, Cons6(a, x, Nil6(a)))))));
+
+% reverse_reverse
+  ASSERT
+  (FORALL (a : ty): (FORALL (l : uni): (reverse(a, reverse(a, l)) = l)));
+
+% reverse_mem
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l : uni, x : uni):
+  ((mem(a, x, l)) <=> (mem(a, x, reverse(a, l))))));
+
+% Reverse_length
+  ASSERT
+  (FORALL (l : list3_int): (length7(tb2t7(reverse(int, t2tb7(l)))) = 
+  length7(l)));
+
+% Reverse_length
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l : uni): (length6(a, reverse(a, l)) = length6(a, l))));
+
+% reverse_num_occ
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l : uni): (num_occ(a, x, l) = num_occ(a, x, reverse(a,
+  l)))));
+
+permut: (ty, uni, uni) -> BOOLEAN;
+
+% permut_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni):
+  (((permut(a, l1, l2))
+   => (FORALL (x : uni): (num_occ(a, x, l1) = num_occ(a, x, l2))))
+  AND ((FORALL (x : uni):
+       ((sort(a, x)) => (num_occ(a, x, l1) = num_occ(a, x, l2))))
+      => (permut(a, l1, l2))))));
+
+% Permut_refl
+  ASSERT (FORALL (a : ty): (FORALL (l : uni): (permut(a, l, l))));
+
+% Permut_sym
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni): ((permut(a, l1, l2)) => (permut(a, l2, l1)))));
+
+% Permut_trans
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni, l3 : uni):
+  ((permut(a, l1, l2)) => ((permut(a, l2, l3)) => (permut(a, l1, l3))))));
+
+% Permut_cons
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l1 : uni, l2 : uni):
+  ((permut(a, l1, l2)) => (permut(a, Cons6(a, x, l1), Cons6(a, x, l2))))));
+
+% Permut_swap
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, y : uni, l : uni): (permut(a, Cons6(a, x, Cons6(a, y,
+  l)), Cons6(a, y, Cons6(a, x, l))))));
+
+% Permut_cons_append
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l1 : uni, l2 : uni): (permut(a, infix_plpl(a, Cons6(a, x,
+  l1), l2), infix_plpl(a, l1, Cons6(a, x, l2))))));
+
+% Permut_assoc
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni, l3 : uni): (permut(a, infix_plpl(a, 
+  infix_plpl(a, l1, l2), l3), infix_plpl(a, l1, infix_plpl(a, l2, l3))))));
+
+% Permut_append
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni, k1 : uni, k2 : uni):
+  ((permut(a, l1, k1))
+  => ((permut(a, l2, k2)) => (permut(a, infix_plpl(a, l1, l2), infix_plpl(a,
+     k1, k2)))))));
+
+% Permut_append_swap
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni): (permut(a, infix_plpl(a, l1, l2), 
+  infix_plpl(a, l2, l1)))));
+
+% Permut_mem
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (x : uni, l1 : uni, l2 : uni):
+  ((permut(a, l1, l2)) => ((mem(a, x, l1)) => (mem(a, x, l2))))));
+
+% Permut_length
+  ASSERT
+  (FORALL (l1 : list3_int, l2 : list3_int):
+  ((permut(int, t2tb7(l1), t2tb7(l2))) => (length7(l1) = length7(l2))));
+
+% Permut_length
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (l1 : uni, l2 : uni):
+  ((permut(a, l1, l2)) => (length6(a, l1) = length6(a, l2)))));
+
+ref7: (ty) -> ty;
+
+mk_ref7: (ty, uni) -> uni;
+
+% mk ref_sort
+  ASSERT
+  (FORALL (a : ty): (FORALL (x : uni): (sort(ref7(a), mk_ref7(a, x)))));
+
+contents7: (ty, uni) -> uni;
+
+% contents_sort
+  ASSERT (FORALL (a : ty): (FORALL (x : uni): (sort(a, contents7(a, x)))));
+
+% contents_def
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni): ((sort(a, u)) => (contents7(a, mk_ref7(a, u)) = u))));
+
+% ref_inversion
+  ASSERT
+  (FORALL (a : ty):
+  (FORALL (u : uni):
+  ((sort(ref7(a), u)) => (u = mk_ref7(a, contents7(a, u))))));
+
+implb: (BITVECTOR(1), BITVECTOR(1)) -> BITVECTOR(1);
+
+% implb_def
+  ASSERT
+  (FORALL (y : BITVECTOR(1)):
+  ((implb(0bin1, y) = y) AND (implb(0bin0, y) = 0bin1)));
+
+heap_rep10 : TYPE;
+
+heap_rep11: ty;
+
+mk_heap_rep5: (list3_int) -> heap_rep10;
+
+data5: (heap_rep10) -> list3_int;
+
+% data_def
+  ASSERT (FORALL (u : list3_int): (data5(mk_heap_rep5(u)) = u));
+
+% heap_rep_inversion
+  ASSERT (FORALL (u : heap_rep10): (u = mk_heap_rep5(data5(u))));
+
+inv4: (heap_rep10) -> BOOLEAN;
+
+% inv_def
+  ASSERT
+  (FORALL (h : heap_rep10):
+  ((inv4(h)) <=> (FORALL (i : INT): ((0 <= i) AND (i < length7(data5(h)))))));
+
+same_object: (heap_rep10, heap_rep10) -> BOOLEAN;
+
+% same_object_def
+  ASSERT
+  (FORALL (l1 : heap_rep10, l2 : heap_rep10):
+  ((same_object(l1, l2)) <=> (permut(int, t2tb7(data5(l1)), t2tb7(
+  data5(l2))))));
+
+isNothing: (option1_int) -> BITVECTOR(1);
+
+% isNothing_def
+  ASSERT
+  ((isNothing(None5) = 0bin1)
+  AND (FORALL (x : INT): (isNothing(tb2t8(Some4(int, t2tb1(x)))) = 0bin0)));
+
+QUERY
+% WP_parameter_swap_helper
+ % File "heapModel/../heapModel.mlw", line 54, characters 6-17
+  (FORALL (i : INT, j : INT, h : list3_int):
+  ((i <= j)
+  => ((NOT (i = j))
+     => (((nth5(i, h) = None5) OR (nth5(j, h) = None5))
+        => (FORALL (i1 : INT): (length7(h) <= i1))))));

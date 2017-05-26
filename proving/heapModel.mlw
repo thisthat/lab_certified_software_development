@@ -1,0 +1,89 @@
+theory Nth
+  use import list.List
+  use import option.Option
+  use import int.Int
+
+  function nth(n:int)(l: list int) : option int = match l with
+    | Nil -> None
+    | Cons x r -> if n = 1 then Some x else nth (n-1) r
+  end
+
+end
+
+module HeapModule
+  use import int.Int
+  use import list.List
+  use import list.Length
+  use import list.Permut
+  use import list.Append
+  use import ref.Ref
+  use import bool.Bool
+  use import option.Option
+  use import Nth
+  use import int.ComputerDivision
+
+  type heap_rep = { data : list int }
+
+  exception Wrong_index
+
+  predicate inv(h : heap_rep) =
+    forall i : int . 0 <= i < length h.data
+
+  let heap_left_position(i: int) : int
+    requires { i > 0}
+    =i * 2
+  let heap_right_position(i :int) : int
+    requires { i > 0}
+    =heap_left_position(i) + 1
+
+  let get_children_position(i : int) : (int, int)
+    requires { i > 0}
+    =(heap_left_position(i), heap_right_position(i))
+
+  let heap_left(i :int)(h: heap_rep): option int
+    requires{i > 0}
+    = nth (heap_left_position i) h.data
+  let heap_right(i :int)(h: heap_rep): option int
+    requires{i > 0}
+    = nth (heap_right_position i) h.data
+
+  let heap_children(i:int)(h: heap_rep) : (option int, option int)
+    requires{i > 0}
+    = (heap_left i h, heap_right i h)
+
+
+  predicate same_object (l1 : heap_rep) (l2:heap_rep) =
+    permut l1.data l2.data
+
+
+  function isNothing(i : option int) : bool=
+    match i with
+    | None -> True
+    | Some _ -> False
+    end
+
+  let get(i : option int) : int
+    requires { not (isNothing i) }
+    =match i with
+    | None -> 0
+    | Some e -> e
+    end
+
+  let swap_helper(i:int)(j:int)(h:heap_rep):heap_rep
+    requires { i <= j }
+    requires { i <= length h.data /\ j <= length h.data}
+    ensures { same_object (old h) h }
+    raises { Wrong_index -> forall i: int. i >= (div (length h.data) 2) }
+    (** then we have to say that each element will be equal except the one in i and j *)
+    = if (isNothing (nth i h.data))  then raise Wrong_index
+      else if (isNothing (nth j h.data))  then raise Wrong_index
+      else h
+
+
+  let swap(i:int)(j:int)(h:heap_rep):heap_rep
+    = try
+        if i <= j  then (swap_helper i j h)
+        else (swap_helper j i h)
+      with Wrong_index -> h
+      end
+end
